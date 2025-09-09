@@ -1,0 +1,25 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "finance-tracker-app-75b32",
+          "appId": "1:778938433937:android:9d8f7ef1806513d3eeda30",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "finance-tracker-app-75b32",
+          "configurations": {
+            "android": "1:778938433937:android:9d8f7ef1806513d3eeda30",
+            "ios": "1:778938433937:ios:69b62882507a5f6aeeda30",
+            "macos": "1:778938433937:ios:69b62882507a5f6aeeda30",
+            "web": "1:778938433937:web:3ddbacc7d6a92015eeda30",
+            "windows": "1:778938433937:web:039aa2108ca1bbeaeeda30"
+          }
+        }
+      }
+    }
+  }
+}
