@@ -1,9 +1,34 @@
+// lib/screens/dashboard/dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/transaction_provider.dart';
+import '../../models/transaction.dart';
+import '../transactions/add_transaction_screen.dart';
+import '../transactions/transaction_history_screen.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Load transactions when dashboard opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final transactionProvider = Provider.of<TransactionProvider>(context, listen: false);
+
+      if (authProvider.user != null) {
+        transactionProvider.loadUserTransactions(authProvider.user!.uid);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,8 +47,8 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Consumer<AuthProvider>(
-        builder: (context, authProvider, child) {
+      body: Consumer2<AuthProvider, TransactionProvider>(
+        builder: (context, authProvider, transactionProvider, child) {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -115,7 +140,7 @@ class DashboardScreen extends StatelessWidget {
                     Expanded(
                       child: _buildFinancialCard(
                         'Total Income',
-                        '\$0.00',
+                        transactionProvider.totalIncome,
                         Icons.trending_up,
                         Colors.green,
                       ),
@@ -124,7 +149,7 @@ class DashboardScreen extends StatelessWidget {
                     Expanded(
                       child: _buildFinancialCard(
                         'Total Expenses',
-                        '\$0.00',
+                        transactionProvider.totalExpense,
                         Icons.trending_down,
                         Colors.red,
                       ),
@@ -144,12 +169,19 @@ class DashboardScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      color: const Color(0xFF4CAF50),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          const Color(0xFF4CAF50),
+                          const Color(0xFF388E3C),
+                        ],
+                      ),
                     ),
-                    child: const Column(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
+                        const Row(
                           children: [
                             Icon(
                               Icons.account_balance_wallet,
@@ -167,15 +199,35 @@ class DashboardScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         Text(
-                          '\$0.00',
-                          style: TextStyle(
+                          '\$${transactionProvider.balance.toStringAsFixed(2)}',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 36,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        if (transactionProvider.balance < 0)
+                          Container(
+                            margin: const EdgeInsets.only(top: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'Deficit',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -207,21 +259,21 @@ class DashboardScreen extends StatelessWidget {
                       'Add Income',
                       Icons.add_circle,
                       Colors.green,
-                          () => _showComingSoon(context, 'Add Income'),
+                          () => _navigateToAddTransaction(context, TransactionType.income),
                     ),
                     _buildActionButton(
                       context,
                       'Add Expense',
                       Icons.remove_circle,
                       Colors.red,
-                          () => _showComingSoon(context, 'Add Expense'),
+                          () => _navigateToAddTransaction(context, TransactionType.expense),
                     ),
                     _buildActionButton(
                       context,
                       'View History',
                       Icons.history,
                       Colors.blue,
-                          () => _showComingSoon(context, 'Transaction History'),
+                          () => _navigateToTransactionHistory(context),
                     ),
                     _buildActionButton(
                       context,
@@ -245,43 +297,89 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Empty State Card
-                Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(40),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.receipt_long,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No transactions yet',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Start by adding your first income or expense',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[500],
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                // Recent Transactions List or Empty State
+                if (transactionProvider.isLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(40),
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF4CAF50),
+                      ),
                     ),
+                  )
+                else if (transactionProvider.transactions.isEmpty)
+                // Empty State Card
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(40),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.receipt_long,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No transactions yet',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Start by adding your first income or expense',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[500],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                // Recent Transactions List
+                  Column(
+                    children: [
+                      // Show up to 5 recent transactions
+                      ...transactionProvider.transactions
+                          .take(5)
+                          .map((transaction) => _buildRecentTransactionCard(transaction))
+                          .toList(),
+
+                      const SizedBox(height: 16),
+
+                      // View All Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () => _navigateToTransactionHistory(context),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            side: const BorderSide(color: Color(0xFF4CAF50)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(
+                            'View All Transactions (${transactionProvider.transactions.length})',
+                            style: const TextStyle(
+                              color: Color(0xFF4CAF50),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
                 const SizedBox(height: 20),
               ],
             ),
@@ -291,7 +389,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFinancialCard(String title, String amount, IconData icon, Color color) {
+  Widget _buildFinancialCard(String title, double amount, IconData icon, Color color) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
@@ -331,7 +429,7 @@ class DashboardScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              amount,
+              '\$${amount.toStringAsFixed(2)}',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -389,6 +487,80 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildRecentTransactionCard(FinanceTransaction transaction) {
+    final isIncome = transaction.type == TransactionType.income;
+    final color = isIncome ? Colors.green : Colors.red;
+    final icon = isIncome ? Icons.add_circle : Icons.remove_circle;
+
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(
+            icon,
+            color: color,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          transaction.category,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF2E7D32),
+          ),
+        ),
+        subtitle: Text(
+          DateFormat('MMM dd, yyyy').format(transaction.date),
+          style: TextStyle(
+            color: Colors.grey[500],
+            fontSize: 12,
+          ),
+        ),
+        trailing: Text(
+          '${isIncome ? '+' : '-'}\$${transaction.amount.toStringAsFixed(2)}',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        onTap: () => _navigateToTransactionHistory(context),
+      ),
+    );
+  }
+
+  void _navigateToAddTransaction(BuildContext context, TransactionType type) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddTransactionScreen(initialType: type),
+      ),
+    ).then((_) {
+      // Clear any errors when returning from add transaction screen
+      Provider.of<TransactionProvider>(context, listen: false).clearError();
+    });
+  }
+
+  void _navigateToTransactionHistory(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const TransactionHistoryScreen(),
       ),
     );
   }
