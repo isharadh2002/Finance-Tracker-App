@@ -142,6 +142,63 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 16),
 
+                    // Divider
+                    Row(
+                      children: [
+                        const Expanded(child: Divider()),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'OR',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                        const Expanded(child: Divider()),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Google Sign-In Button
+                    OutlinedButton.icon(
+                      onPressed: authProvider.isLoading ? null : _handleGoogleSignIn,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.all(16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        side: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      icon: Image.asset(
+                        'assets/icons/google_logo.webp',
+                        height: 20,
+                        width: 20,
+                        errorBuilder: (context, error, stackTrace) {
+                          // Fallback to a simple icon if the image is not found
+                          return const Icon(
+                            Icons.account_circle,
+                            size: 20,
+                            color: Colors.red,
+                          );
+                        },
+                      ),
+                      label: authProvider.isLoading
+                          ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                          : const Text(
+                        'Continue with Google',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
                     // Register Link
                     TextButton(
                       onPressed: () {
@@ -171,6 +228,21 @@ class _LoginScreenState extends State<LoginScreen> {
       await authProvider.signIn(
         _emailController.text.trim(),
         _passwordController.text.trim(),
+      );
+    }
+  }
+
+  void _handleGoogleSignIn() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    bool success = await authProvider.signInWithGoogle();
+
+    if (success && context.mounted) {
+      // Google Sign-In successful - AuthWrapper will handle navigation
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Successfully signed in with Google!'),
+          backgroundColor: Colors.green,
+        ),
       );
     }
   }
