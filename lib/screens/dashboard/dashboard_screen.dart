@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../models/transaction.dart';
+import '../settings/settings_screen.dart';
 import '../transactions/add_transaction_screen.dart';
 import '../transactions/edit_transaction_screen.dart';
 import '../transactions/transaction_history_screen.dart';
@@ -297,7 +298,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       'Settings',
                       Icons.settings,
                       Colors.grey,
-                          () => _showComingSoon(context, 'Settings'),
+                          () => _navigateToSettings(context),
                     ),
                   ],
                 ),
@@ -654,6 +655,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => const ReportsScreen(),
+      ),
+    );
+  }
+
+  void _navigateToSettings(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SettingsScreen(),
       ),
     );
   }

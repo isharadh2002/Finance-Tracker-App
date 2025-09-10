@@ -1,3 +1,4 @@
+// lib/providers/auth_provider.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -167,6 +168,42 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  // Change password for email/password accounts
+  Future<bool> changePassword(String currentPassword, String newPassword) async {
+    try {
+      _setLoading(true);
+      _setError('');
+
+      if (_user == null) {
+        _setError('No user signed in');
+        _setLoading(false);
+        return false;
+      }
+
+      // Re-authenticate the user first
+      final credential = EmailAuthProvider.credential(
+        email: _user!.email!,
+        password: currentPassword,
+      );
+
+      print('DEBUG: Re-authenticating user...');
+      await _user!.reauthenticateWithCredential(credential);
+
+      print('DEBUG: Updating password...');
+      await _user!.updatePassword(newPassword);
+
+      print('DEBUG: Password updated successfully');
+      _setLoading(false);
+      return true;
+
+    } catch (e) {
+      print('DEBUG: Change password error: $e');
+      _setLoading(false);
+      _setError(_getErrorMessage(e.toString()));
+      return false;
+    }
+  }
+
   String _getErrorMessage(String error) {
     print('DEBUG: Processing error: $error');
 
@@ -192,7 +229,11 @@ class AuthProvider with ChangeNotifier {
       return 'Network error. Please check your internet connection.';
     } else if (error.contains('GoogleService')) {
       return 'Google Services configuration error. Please contact support.';
-    } else {
+    } else if (error.contains('requires-recent-login')) {
+      return 'This operation requires recent authentication. Please sign in again.';
+    } else if (error.contains('too-many-requests')) {
+      return 'Too many failed attempts. Please try again later.';}
+    else {
       return 'An error occurred: $error';
     }
   }
