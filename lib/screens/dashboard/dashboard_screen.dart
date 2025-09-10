@@ -7,6 +7,8 @@ import '../../providers/transaction_provider.dart';
 import '../../models/transaction.dart';
 import '../transactions/add_transaction_screen.dart';
 import '../transactions/transaction_history_screen.dart';
+import '../budget/budget_screen.dart';
+import '../reports/reports_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -277,10 +279,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     _buildActionButton(
                       context,
+                      'Budget Planning',
+                      Icons.account_balance_wallet,
+                      Colors.purple,
+                          () => _navigateToBudget(context),
+                    ),
+                    _buildActionButton(
+                      context,
                       'Reports',
                       Icons.bar_chart,
                       Colors.orange,
-                          () => _showComingSoon(context, 'Reports'),
+                          () => _navigateToReports(context),
+                    ),
+                    _buildActionButton(
+                      context,
+                      'Settings',
+                      Icons.settings,
+                      Colors.grey,
+                          () => _showComingSoon(context, 'Settings'),
                     ),
                   ],
                 ),
@@ -507,7 +523,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         leading: Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Icon(
@@ -561,6 +577,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => const TransactionHistoryScreen(),
+      ),
+    );
+  }
+
+  void _navigateToBudget(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const BudgetScreen(),
+      ),
+    );
+  }
+
+  void _navigateToReports(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ReportsScreen(),
       ),
     );
   }
