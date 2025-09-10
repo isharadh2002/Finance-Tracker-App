@@ -143,6 +143,70 @@ class TransactionProvider with ChangeNotifier {
     }
   }
 
+  // Update an existing transaction
+  Future<bool> updateTransaction({
+    required String transactionId,
+    required String userId,
+    required double amount,
+    required String category,
+    required String description,
+    required DateTime date,
+    required TransactionType type,
+    required DateTime createdAt,
+  }) async {
+    try {
+      _setLoading(true);
+      _setError('');
+
+      final updatedTransaction = FinanceTransaction(
+        id: transactionId,
+        userId: userId,
+        amount: amount,
+        category: category,
+        description: description,
+        date: date,
+        type: type,
+        createdAt: createdAt,
+      );
+
+      print('DEBUG: Updating transaction: ${updatedTransaction.category} - \$${updatedTransaction.amount}');
+
+      // Update in Firestore - the real-time listener will automatically update the UI
+      await _transactionService.updateTransaction(updatedTransaction);
+
+      print('DEBUG: Transaction updated successfully in Firestore');
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      print('DEBUG: Error updating transaction: $e');
+      _setLoading(false);
+      _setError('Failed to update transaction: $e');
+      return false;
+    }
+  }
+
+  // Delete a transaction
+  Future<bool> deleteTransaction(String transactionId) async {
+    try {
+      _setLoading(true);
+      _setError('');
+
+      print('DEBUG: Deleting transaction: $transactionId');
+
+      // Delete from Firestore - the real-time listener will automatically update the UI
+      await _transactionService.deleteTransaction(transactionId);
+
+      print('DEBUG: Transaction deleted successfully from Firestore');
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      print('DEBUG: Error deleting transaction: $e');
+      _setLoading(false);
+      _setError('Failed to delete transaction: $e');
+      return false;
+    }
+  }
+
   // Update financial summary
   void _updateFinancialSummary() {
     _totalIncome = _transactions
@@ -181,22 +245,6 @@ class TransactionProvider with ChangeNotifier {
     _startDate = null;
     _endDate = null;
     notifyListeners();
-  }
-
-  // Delete a transaction
-  Future<bool> deleteTransaction(String transactionId) async {
-    try {
-      _setLoading(true);
-      _setError('');
-
-      await _transactionService.deleteTransaction(transactionId);
-      _setLoading(false);
-      return true;
-    } catch (e) {
-      _setLoading(false);
-      _setError('Failed to delete transaction: $e');
-      return false;
-    }
   }
 
   // Get all unique categories from transactions

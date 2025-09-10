@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../models/transaction.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/transaction_provider.dart';
+import 'edit_transaction_screen.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
   const TransactionHistoryScreen({super.key});
@@ -253,7 +254,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
@@ -302,6 +303,43 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  onTap: () => _navigateToEditTransaction(context, transaction),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Icon(
+                      Icons.edit,
+                      size: 16,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: () => _showDeleteConfirmation(context, transaction),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Icon(
+                      Icons.delete,
+                      size: 16,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -359,7 +397,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 if (provider.selectedCategory != 'All')
                   Chip(
                     label: Text(provider.selectedCategory),
-                    backgroundColor: const Color(0xFF4CAF50).withOpacity(0.1),
+                    backgroundColor: const Color(0xFF4CAF50).withValues(alpha: 0.1),
                     deleteIcon: const Icon(Icons.close, size: 16),
                     onDeleted: () => provider.setSelectedCategory('All'),
                   ),
@@ -367,7 +405,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   Chip(
                     label: Text(provider.selectedType == TransactionType.income
                         ? 'Income' : 'Expense'),
-                    backgroundColor: const Color(0xFF4CAF50).withOpacity(0.1),
+                    backgroundColor: const Color(0xFF4CAF50).withValues(alpha: 0.1),
                     deleteIcon: const Icon(Icons.close, size: 16),
                     onDeleted: () => provider.setSelectedType(null),
                   ),
@@ -377,7 +415,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       '${DateFormat('MMM dd').format(provider.startDate!)} - '
                           '${DateFormat('MMM dd').format(provider.endDate!)}',
                     ),
-                    backgroundColor: const Color(0xFF4CAF50).withOpacity(0.1),
+                    backgroundColor: const Color(0xFF4CAF50).withValues(alpha: 0.1),
                     deleteIcon: const Icon(Icons.close, size: 16),
                     onDeleted: () => provider.setDateRange(null, null),
                   ),
@@ -387,6 +425,77 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         ),
       ),
     );
+  }
+
+  void _navigateToEditTransaction(BuildContext context, FinanceTransaction transaction) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditTransactionScreen(transaction: transaction),
+      ),
+    ).then((_) {
+      // Clear any errors when returning from edit screen
+      Provider.of<TransactionProvider>(context, listen: false).clearError();
+    });
+  }
+
+  void _showDeleteConfirmation(BuildContext context, FinanceTransaction transaction) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Delete Transaction',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2E7D32),
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to delete this transaction?\n\n'
+                '${transaction.category}: \$${transaction.amount.toStringAsFixed(2)}',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context); // Close dialog first
+                await _handleDeleteTransaction(transaction);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _handleDeleteTransaction(FinanceTransaction transaction) async {
+    final transactionProvider = Provider.of<TransactionProvider>(context, listen: false);
+
+    final success = await transactionProvider.deleteTransaction(transaction.id);
+
+    if (success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Transaction deleted successfully!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _showFilterDialog(BuildContext context) {
@@ -411,7 +520,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -421,12 +530,14 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              transaction.category,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2E7D32),
+            Expanded(
+              child: Text(
+                transaction.category,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2E7D32),
+                ),
               ),
             ),
           ],
@@ -436,7 +547,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildDetailRow('Amount',
-                '${isIncome ? '+' : '-'}\$${transaction.amount.toStringAsFixed(2)}',
+                '${isIncome ? '+' : '-'}\${transaction.amount.toStringAsFixed(2)}',
                 color),
             _buildDetailRow('Type',
                 isIncome ? 'Income' : 'Expense'),
@@ -455,6 +566,13 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               'Close',
               style: TextStyle(color: Color(0xFF4CAF50)),
             ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _navigateToEditTransaction(context, transaction);
+            },
+            child: const Text('Edit'),
           ),
         ],
       ),
@@ -547,7 +665,7 @@ class _FilterDialogState extends State<FilterDialog> {
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-                  value: _selectedCategory,
+                  initialValue: _selectedCategory,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.grey[50],
@@ -581,7 +699,7 @@ class _FilterDialogState extends State<FilterDialog> {
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<TransactionType?>(
-                  value: _selectedType,
+                  initialValue: _selectedType,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.grey[50],

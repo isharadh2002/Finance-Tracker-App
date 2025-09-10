@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../models/transaction.dart';
 import '../transactions/add_transaction_screen.dart';
+import '../transactions/edit_transaction_screen.dart';
 import '../transactions/transaction_history_screen.dart';
 import '../budget/budget_screen.dart';
 import '../reports/reports_screen.dart';
@@ -218,7 +219,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
@@ -421,7 +422,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -481,7 +482,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -540,20 +541,78 @@ class _DashboardScreenState extends State<DashboardScreen> {
             color: Color(0xFF2E7D32),
           ),
         ),
-        subtitle: Text(
-          DateFormat('MMM dd, yyyy').format(transaction.date),
-          style: TextStyle(
-            color: Colors.grey[500],
-            fontSize: 12,
-          ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (transaction.description.isNotEmpty)
+              Text(
+                transaction.description,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            Text(
+              DateFormat('MMM dd, yyyy').format(transaction.date),
+              style: TextStyle(
+                color: Colors.grey[500],
+                fontSize: 12,
+              ),
+            ),
+          ],
         ),
-        trailing: Text(
-          '${isIncome ? '+' : '-'}\$${transaction.amount.toStringAsFixed(2)}',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '${isIncome ? '+' : '-'}\$${transaction.amount.toStringAsFixed(2)}',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  onTap: () => _navigateToEditTransaction(context, transaction),
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    child: const Icon(
+                      Icons.edit,
+                      size: 14,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                InkWell(
+                  onTap: () => _showDeleteConfirmation(context, transaction),
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    child: const Icon(
+                      Icons.delete,
+                      size: 14,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
         onTap: () => _navigateToTransactionHistory(context),
       ),
@@ -667,5 +726,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
       },
     );
+  }
+
+  void _navigateToEditTransaction(BuildContext context, FinanceTransaction transaction) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditTransactionScreen(transaction: transaction),
+      ),
+    ).then((_) {
+      // Clear any errors when returning from edit screen
+      Provider.of<TransactionProvider>(context, listen: false).clearError();
+    });
+  }
+
+  void _showDeleteConfirmation(BuildContext context, FinanceTransaction transaction) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Delete Transaction',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2E7D32),
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to delete this transaction?\n\n'
+                '${transaction.category}: \$${transaction.amount.toStringAsFixed(2)}',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context); // Close dialog first
+                await _handleDeleteTransaction(transaction);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _handleDeleteTransaction(FinanceTransaction transaction) async {
+    final transactionProvider = Provider.of<TransactionProvider>(context, listen: false);
+
+    final success = await transactionProvider.deleteTransaction(transaction.id);
+
+    if (success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Transaction deleted successfully!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }
