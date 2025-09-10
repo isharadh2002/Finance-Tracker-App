@@ -4,9 +4,14 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import 'change_password_screen.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,6 +25,27 @@ class SettingsScreen extends StatelessWidget {
       body: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
           final user = authProvider.user;
+
+          // Navigate to login if user is signed out
+          if (user == null && !authProvider.isLoading) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                // Navigate back to the root (AuthWrapper will handle showing login)
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/',
+                      (route) => false,
+                );
+              }
+            });
+            // Show loading while navigating
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF4CAF50),
+                ),
+              ),
+            );
+          }
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
@@ -349,7 +375,7 @@ class SettingsScreen extends StatelessWidget {
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
           ),
           title: const Text(
             'Sign Out',
@@ -359,8 +385,10 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           content: const Text(
-            'Are you sure you want to sign out of your account?',
-            style: TextStyle(fontSize: 16),
+            'Are you sure you want to sign out?',
+            style: TextStyle(
+              fontSize: 16,
+            ),
           ),
           actions: [
             TextButton(
@@ -380,14 +408,16 @@ class SettingsScreen extends StatelessWidget {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               child: const Text(
                 'Sign Out',
-                style: TextStyle(fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],

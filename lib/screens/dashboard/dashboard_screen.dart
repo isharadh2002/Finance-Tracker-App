@@ -719,7 +719,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Provider.of<AuthProvider>(context, listen: false).signOut();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4CAF50),
+                backgroundColor: Colors.red,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
