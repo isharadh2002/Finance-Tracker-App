@@ -569,16 +569,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            category.key,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF2E7D32),
+                          Expanded(
+                            child: Text(
+                              category.key, // This shows the category name
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF2E7D32),
+                              ),
                             ),
                           ),
                           Text(
-                            '\${category.value.toStringAsFixed(2)} (${percentage.toInt()}%)',
+                            '\$${category.value.toStringAsFixed(2)} (${percentage.toInt()}%)', // Fixed string interpolation
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
