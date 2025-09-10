@@ -88,7 +88,7 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
                           ),
                           const SizedBox(height: 12),
                           DropdownButtonFormField<String>(
-                            value: _selectedCategory,
+                            initialValue: _selectedCategory,
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: Colors.grey[50],

@@ -248,7 +248,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                                 ),
                                 const SizedBox(height: 12),
                                 DropdownButtonFormField<String>(
-                                  value: _selectedCategory.isEmpty
+                                  initialValue: _selectedCategory.isEmpty
                                       ? null
                                       : _selectedCategory,
                                   decoration: InputDecoration(
