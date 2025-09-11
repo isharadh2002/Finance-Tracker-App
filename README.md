@@ -20,9 +20,9 @@ An application that allows users to track their personal finances, including inc
 
 ### 💰 **Transaction Management**
 - **Dual Transaction Types**: Add both income and expense transactions
-- **Comprehensive Categories**:
-   - **Income**: Salary, Freelance, Business, Investment, Gift, Other Income
-   - **Expenses**: Food & Dining, Transportation, Shopping, Entertainment, Bills & Utilities, Healthcare, Education, Travel, Groceries, Other Expense
+- **Comprehensive Categories**: 
+  - **Income**: Salary, Freelance, Business, Investment, Gift, Other Income
+  - **Expenses**: Food & Dining, Transportation, Shopping, Entertainment, Bills & Utilities, Healthcare, Education, Travel, Groceries, Other Expense
 - **Rich Transaction Details**: Amount, category, date, and description fields
 - **Real-time Updates**: Immediate UI updates across all screens
 - **Transaction History**: Complete list with filtering and sorting options
@@ -127,8 +127,8 @@ dependencies:
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd finance_tracker_app
+   git clone https://github.com/isharadh2002/Finance-Tracker-App.git
+   cd Finance-Tracker-App
    ```
 
 2. **Install dependencies**
@@ -140,8 +140,8 @@ dependencies:
    - Create a Firebase project at [https://console.firebase.google.com](https://console.firebase.google.com)
    - Add a Flutter app to your Firebase project
    - Enable Authentication:
-      - Email/Password provider
-      - Google Sign-in provider
+     - Email/Password provider
+     - Google Sign-in provider
    - Enable Firestore Database with the following rules:
      ```javascript
      rules_version = '2';
@@ -181,9 +181,9 @@ Your Flutter project is configured as a unified Firebase project with multi-plat
 - **Project ID**: `finance-tracker-app-75b32`
 - **Platforms Supported**: Android, iOS, Web, Windows, macOS
 - **Configuration Files**:
-   - `firebase.json` - FlutterFire project configuration
-   - `lib/firebase_options.dart` - Generated platform-specific options
-   - `android/app/google-services.json` - Android configuration
+  - `firebase.json` - FlutterFire project configuration
+  - `lib/firebase_options.dart` - Generated platform-specific options
+  - `android/app/google-services.json` - Android configuration
 - **Authentication**: Email/Password and Google Sign-In providers enabled
 - **Database**: Cloud Firestore with security rules for user data isolation
 
